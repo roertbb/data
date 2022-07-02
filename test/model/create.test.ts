@@ -97,56 +97,59 @@ test('creates a new entity with nullable properties', () => {
   expect(user.address.number).toEqual(null)
 })
 
-test('creates a new entity with nullable properties', () => {
-  const db = factory({
-    user: {
-      id: primaryKey(faker.datatype.uuid),
-      test: String,
-      name: nullable(faker.name.findName),
-      age: nullable<number>(() => null),
-      // regular object
-      address: {
-        street: String,
-        number: nullable<number>(() => null),
+describe('nullable object property', () => {
+  it('defaults to value provided in factory when not set during model creation', () => {
+    const db = factory({
+      user: {
+        id: primaryKey(faker.datatype.uuid),
+        address: nullable({
+          street: () => 'Wall Street',
+          number: nullable<number>(() => null),
+        }),
       },
-      // nullable object - explicit null
-      address2: nullable({
-        street: String,
-        number: nullable<number>(() => null),
-      }),
-      // nullable object - nothing past = take default
-      address3: nullable({
-        street: String,
-        number: nullable<number>(() => null),
-      }),
-      // nullable object - smth passed = take what's passed
-      address4: nullable({
-        street: String,
-        number: nullable<number>(() => null),
-      }),
-      address5: nullable(Object),
-      address6: nullable(Object),
-    },
+    })
+
+    const user = db.user.create()
+
+    expect(user.address).toEqual({
+      street: 'Wall Street',
+      number: null,
+    })
   })
 
-  const user = db.user.create({
-    id: 'abc-123',
-    name: null,
-    address2: null,
-    address4: {
-      street: 'asdf',
-    },
-    address5: null,
+  it('equals to null when explicitly set during model creation', () => {
+    const db = factory({
+      user: {
+        id: primaryKey(faker.datatype.uuid),
+        address: nullable({
+          street: () => 'Wall Street',
+          number: nullable<number>(() => null),
+        }),
+      },
+    })
+
+    const user = db.user.create({ address: null })
+
+    expect(user.address).toEqual(null)
   })
 
-  expect(user.name).toEqual(null)
-  expect(user.age).toEqual(null)
-  expect(user.address.number).toEqual(null)
-  expect(user.address2).toEqual(null)
-  expect(user.address3).toEqual({ street: '', number: null })
-  expect(user.address4).toEqual({ street: 'asdf', number: null })
-  expect(user.address5).toEqual(null)
-  expect(user.address6).toEqual({})
+  it('equals to provided value during model creation', () => {
+    const db = factory({
+      user: {
+        id: primaryKey(faker.datatype.uuid),
+        address: nullable({
+          street: String,
+          number: nullable<number>(() => null),
+        }),
+      },
+    })
+
+    const user = db.user.create({
+      address: { street: 'Baker Street', number: 123 },
+    })
+
+    expect(user.address).toEqual({ street: 'Baker Street', number: 123 })
+  })
 })
 
 test('supports nested objects in the model definition', () => {
